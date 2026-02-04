@@ -1,0 +1,300 @@
+definitions:
+  models.Sensor:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      last_updated:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      type:
+        $ref: '#/definitions/models.SensorType'
+      unit:
+        type: string
+      value:
+        type: number
+    type: object
+  models.SensorCreate:
+    properties:
+      location:
+        type: string
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/models.SensorType'
+      unit:
+        type: string
+    required:
+    - location
+    - name
+    - type
+    type: object
+  models.SensorPath:
+    properties:
+      status:
+        type: string
+      value:
+        type: number
+    type: object
+  models.SensorType:
+    enum:
+    - temperature
+    type: string
+    x-enum-varnames:
+    - Temperature
+  models.SensorUpdate:
+    properties:
+      location:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      type:
+        $ref: '#/definitions/models.SensorType'
+      unit:
+        type: string
+      value:
+        type: number
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/sensors:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все датчики
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Sensor'
+            type: array
+      summary: Получить датчики
+      tags:
+      - sensors
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Тело
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SensorCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном обновлении
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка запроса или данных
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать датчик
+      tags:
+      - sensors
+  /api/v1/sensors/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID датчика
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном обновлении
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка запроса или данных
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить датчик
+      tags:
+      - sensors
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID датчика
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном обновлении
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка запроса или данных
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить датчик по идентификатору
+      tags:
+      - sensors
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID датчика
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Тело
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SensorUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном обновлении
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка запроса или данных
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить значение датчика
+      tags:
+      - sensors
+  /api/v1/sensors/{id}/value:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID датчика
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Тело
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SensorPath'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном обновлении
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка запроса или данных
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить значение датчика
+      tags:
+      - sensors
+  /api/v1/sensors/temperature:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Локация
+        in: query
+        name: location
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном обновлении
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка запроса или данных
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить температуру в локации
+      tags:
+      - sensors
+swagger: "2.0"

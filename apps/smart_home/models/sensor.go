@@ -41,3 +41,8 @@ type SensorUpdate struct {
 	Unit     string     `json:"unit"`
 	Status   string     `json:"status"`
 }
+
+type SensorPath struct {
+	Value  *float64 `json:"value"`
+	Status string   `json:"status"`
+}

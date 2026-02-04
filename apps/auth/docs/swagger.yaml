@@ -1,0 +1,365 @@
+definitions:
+  models.Home:
+    properties:
+      address:
+        description: Адрес дома
+        type: string
+      created_at:
+        description: Дата создания записи
+        type: string
+      id:
+        description: Уникальный идентификатор дома
+        type: integer
+      updated_at:
+        description: Дата последнего обновления
+        type: string
+      user_id:
+        description: Идентификатор пользователя, который владеет домом (связь с пользователем)
+        type: integer
+    type: object
+  models.HomeCreate:
+    properties:
+      address:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - address
+    type: object
+  models.User:
+    properties:
+      created_at:
+        description: Дата создания записи
+        type: string
+      email:
+        description: Email пользователя
+        type: string
+      first_name:
+        description: Имя пользователя
+        type: string
+      id:
+        description: Уникальный идентификатор пользователя
+        type: integer
+      last_name:
+        description: Фамилия пользователя
+        type: string
+      password:
+        description: Хэш пароля
+        type: string
+      role:
+        description: Роль пользователя (например, "admin" или "user")
+        type: string
+      updated_at:
+        description: Дата последнего обновления
+        type: string
+    type: object
+  models.UserCreate:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role:
+        description: Обратите внимание на валидацию роли
+        enum:
+        - admin
+        - user
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - role
+    type: object
+  models.UserUpdate:
+    properties:
+      email:
+        description: Поле может быть пустым, если не обновляется
+        type: string
+      first_name:
+        description: Поле может быть пустым, если не обновляется
+        type: string
+      last_name:
+        description: Поле может быть пустым, если не обновляется
+        type: string
+      password:
+        description: Поле может быть пустым, если не обновляется
+        type: string
+      role:
+        description: Поле может быть пустым, если не обновляется
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/homes:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список домов по user_id
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Home'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить дома пользователя
+      tags:
+      - homes
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новый дом
+      parameters:
+      - description: Home data
+        in: body
+        name: home
+        required: true
+        schema:
+          $ref: '#/definitions/models.HomeCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Home'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать дом
+      tags:
+      - homes
+  /api/v1/homes/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет дом по ID
+      parameters:
+      - description: Home ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить дом
+      tags:
+      - homes
+    get:
+      consumes:
+      - application/json
+      description: Возвращает дом по ID
+      parameters:
+      - description: Home ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Home'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить дом
+      tags:
+      - homes
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о доме
+      parameters:
+      - description: Home ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated home data
+        in: body
+        name: home
+        required: true
+        schema:
+          $ref: '#/definitions/models.Home'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Home'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить дом
+      tags:
+      - homes
+  /api/v1/users:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт нового пользователя
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Создать пользователя (осознно post body запрос)
+      tags:
+      - users
+  /api/v1/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет пользователя по ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить пользователя
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Возвращает пользователя по ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Получить пользователя
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о пользователе
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User update data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Обновить пользователя
+      tags:
+      - users
+swagger: "2.0"

@@ -13,7 +13,11 @@ import (
 	"smarthome/handlers"
 	"smarthome/services"
 
+	_ "smarthome/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -35,6 +39,7 @@ func main() {
 	// Initialize router
 	router := gin.Default()
 
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -45,8 +50,20 @@ func main() {
 	// API routes
 	apiRoutes := router.Group("/api/v1")
 
+	// Список брокеров Kafka
+	brokersEnv := getEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:29092")
+	brokers := []string{brokersEnv}
+
+	// Инициализация KafkaProducer
+	kafkaProducer, err := services.NewKafkaProducer(brokers)
+	if err != nil {
+		log.Fatalf("Error creating Kafka producer: %v", err)
+	}
+	defer kafkaProducer.Close()
+	kafkaProducer.StartListener()
+
 	// Register sensor routes
-	sensorHandler := handlers.NewSensorHandler(database, temperatureService)
+	sensorHandler := handlers.NewSensorHandler(database, temperatureService, kafkaProducer)
 	sensorHandler.RegisterRoutes(apiRoutes)
 
 	// Start server
