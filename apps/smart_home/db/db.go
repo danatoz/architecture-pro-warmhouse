@@ -229,7 +229,7 @@ func (db *DB) DeleteSensor(ctx context.Context, id int) error {
 }
 
 // UpdateSensorValue updates the value and status of a sensor
-func (db *DB) UpdateSensorValue(ctx context.Context, id int, value float64, status string) error {
+func (db *DB) UpdateSensorValue(ctx context.Context, id int, value *float64, status string) error {
 	query := `
 		UPDATE sensors
 		SET value = $1, status = $2, last_updated = $3
