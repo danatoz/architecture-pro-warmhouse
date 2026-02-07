@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"smarthome/db"
@@ -60,20 +61,34 @@ func (h *SensorHandler) GetSensors(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(sensors))
 	// Update temperature sensors with real-time data from the external API
 	for i, sensor := range sensors {
 		if sensor.Type == models.Temperature {
-			tempData, err := h.TemperatureService.GetTemperatureByID(fmt.Sprintf("%d", sensor.ID))
-			if err == nil {
-				// Update sensor with real-time data
-				sensors[i].Value = tempData.Value
-				sensors[i].Status = tempData.Status
-				sensors[i].LastUpdated = tempData.Timestamp
-				log.Printf("Updated temperature data for sensor %d from external API", sensor.ID)
-			} else {
-				log.Printf("Failed to fetch temperature data for sensor %d: %v", sensor.ID, err)
-			}
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				tempData, err := h.TemperatureService.GetTemperatureByID(fmt.Sprintf("%d", sensor.ID))
+				if err == nil {
+					// Update sensor with real-time data
+					sensors[i].Value = tempData.Value
+					sensors[i].Status = tempData.Status
+					sensors[i].LastUpdated = tempData.Timestamp
+					log.Printf("Updated temperature data for sensor %d from external API", sensor.ID)
+				} else {
+					log.Printf("Failed to fetch temperature data for sensor %d: %v", sensor.ID, err)
+				}
+				errChan <- err
+			}(i)
+		}
+	}
+	wg.Wait()
+	close(errChan)
+	for i := 0; i < len(sensors); i++ {
+		err := <-errChan
+		if err != nil {
+			log.Printf("Error updating sensor data: %v", err)
 		}
 	}
 
@@ -176,8 +191,10 @@ func (h *SensorHandler) CreateSensor(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	h.SendTelemetry(sensor.ID, &sensor.Value, time.Now(), sensor.Status, string(sensor.Type), sensor.Unit)
+	AsyncWrapper(func() error {
+		h.SendTelemetry(sensor.ID, &sensor.Value, time.Now(), sensor.Status, string(sensor.Type), sensor.Unit)
+		return nil
+	})
 
 	c.JSON(http.StatusCreated, sensor)
 }
@@ -210,7 +227,11 @@ func (h *SensorHandler) UpdateSensor(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	h.SendTelemetry(id, sensorUpdate.Value, time.Now(), sensorUpdate.Status, string(sensor.Type), sensor.Unit)
+
+	AsyncWrapper(func() error {
+		h.SendTelemetry(id, sensorUpdate.Value, time.Now(), sensorUpdate.Status, string(sensor.Type), sensor.Unit)
+		return nil
+	})
 
 	c.JSON(http.StatusOK, sensor)
 }
@@ -269,7 +290,10 @@ func (h *SensorHandler) UpdateSensorValue(c *gin.Context) {
 		return
 	}
 
-	h.SendTelemetry(id, input.Value, time.Now(), input.Status, "", "")
+	AsyncWrapper(func() error {
+		h.SendTelemetry(id, input.Value, time.Now(), input.Status, "", "")
+		return nil
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Sensor value updated successfully"})
 }
@@ -294,4 +318,13 @@ func (h *SensorHandler) SendTelemetry(id int, value *float64, timestamp time.Tim
 	}
 
 	h.KafkaProducer.SendMessage("smart-home.sensors-datas.telemetry", message, headers)
+}
+
+func AsyncWrapper(fn func() error) {
+	go func() {
+		// Обработка ошибки в фоновом потоке
+		if err := fn(); err != nil {
+			log.Printf("Error executing function asynchronously: %v", err)
+		}
+	}()
 }

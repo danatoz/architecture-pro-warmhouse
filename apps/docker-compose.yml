@@ -8,28 +8,19 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: smarthome
+      POSTGRES_DB: postgres
+      POSTGRES_MULTIPLE_DATABASES: smarthome,smarthome_telemetry
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
+    volumes:
+      - ./sql-scripts:/docker-entrypoint-initdb.d/
+      - postgres_data:/var/lib/postgresql/data/
     networks:
       - smarthome-network
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: user@example.com
-      PGADMIN_DEFAULT_PASSWORD: postgres
-    ports:
-      - "8082:80"
-    networks:
-      - smarthome-network
-    depends_on:
-      - postgres
 
   temperature-api:
     build:
@@ -47,6 +38,11 @@ services:
       context: ./telemetry
       dockerfile: Dockerfile
     container_name: telemetry
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     ports:
       - "8083:8080"
     environment:
@@ -111,6 +107,26 @@ services:
 
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka:9092 --list || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - smarthome-network
+
+##########################################################################################
+
+  create-topics:
+    image: confluentinc/cp-kafka:latest  # Используем тот же образ для утилит Kafka
+    container_name: create-topics
+    depends_on:
+      - kafka
+    volumes:
+      - ./create-topics.sh:/create-topics.sh
+    entrypoint: ["bash", "/create-topics.sh"]
+    restart: "no"
     networks:
       - smarthome-network
 
@@ -129,11 +145,22 @@ services:
     networks:
       - smarthome-network
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@example.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+    ports:
+      - "8082:80"
+    networks:
+      - smarthome-network
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
-  timescaledb_data:
   kafka_data:
-  
 
 networks:
   smarthome-network:

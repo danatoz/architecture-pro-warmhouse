@@ -20,6 +20,16 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title Smart Home API
+// @version 1.0
+// @description REST API для управления датчиками умного дома.
+// @description
+// @description Асинхронная передача телеметрии через Kafka
+// @description описана отдельно с помощью AsyncAPI.
+// @externalDocs.description AsyncAPI
+// @externalDocs.url http://localhost:8080/docs/asyncapi.yaml
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	// Set up database connection
 	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/smarthome")
@@ -39,7 +49,13 @@ func main() {
 	// Initialize router
 	router := gin.Default()
 
+	// Docs
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusFound, "/swagger/index.html")
+	})
+	router.StaticFile("/docs/asyncapi.yaml", "./docs/asyncapi.yaml")
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

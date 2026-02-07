@@ -1,8 +1,13 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "REST API для управления датчиками умного дома.\n\nАсинхронная передача телеметрии через Kafka\nописана отдельно с помощью AsyncAPI.",
+        "title": "Smart Home API",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
     "paths": {
         "/api/v1/sensors": {
             "get": {
@@ -455,5 +460,9 @@
                 }
             }
         }
+    },
+    "externalDocs": {
+        "description": "AsyncAPI",
+        "url": "http://localhost:8080/docs/asyncapi.yaml"
     }
 }

@@ -1,0 +1,62 @@
+asyncapi: 3.1.0
+info:
+  title: Smart Home Telemetry API
+  version: 1.0.0
+servers:
+  kafka:
+    host: 'localhost:9092'
+    protocol: kafka
+channels:
+  smart-home.sensors-datas.telemetry:
+    address: smart-home.sensors-datas.telemetry
+    messages:
+      publish.message:
+        $ref: '#/components/messages/SensorTelemetry'
+operations:
+  smart-home.sensors-datas.telemetry.publish:
+    action: receive
+    channel:
+      $ref: '#/channels/smart-home.sensors-datas.telemetry'
+    summary: Публикация телеметрии датчиков
+    messages:
+      - $ref: '#/channels/smart-home.sensors-datas.telemetry/messages/publish.message'
+components:
+  messages:
+    SensorTelemetry:
+      name: SensorTelemetryEvent
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/TelemetryHeaders'
+      payload:
+        $ref: '#/components/schemas/SensorData'
+  schemas:
+    TelemetryHeaders:
+      type: object
+      properties:
+        message-type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    SensorData:
+      type: object
+      required:
+        - sensor_id
+        - timestamp
+        - status
+      properties:
+        sensor_id:
+          type: integer
+        value:
+          type: number
+          format: double
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+        type:
+          type: string
+        unit:
+          type: string
